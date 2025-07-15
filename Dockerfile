@@ -17,6 +17,7 @@ RUN npm run build
 FROM base AS production
 COPY --from=dependencies /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
+COPY .env ./.env
 
 ENV NODE_ENV production
 EXPOSE 3000
