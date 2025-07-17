@@ -30,6 +30,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { CreateDeviceResponseDto } from './dto/create-device-response.dto';
 import { DevicesListResponseDto } from './dto/devices-list-response.dto';
@@ -92,9 +93,19 @@ export class DevicesController {
   async create(
     @Body() createDeviceDto: CreateDeviceDto,
     @CurrentUser() user: User,
-  ): Promise<DeviceResponseDto> {
+  ): Promise<CreateDeviceResponseDto> {
     const device = await this.devicesService.create(createDeviceDto, user);
-    return plainToClass(DeviceResponseDto, device);
+    const deviceResponse = plainToClass(DeviceResponseDto, device);
+    
+    return {
+      status: 'success',
+      data: deviceResponse,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        path: '/devices',
+        executionTime: 0, // This would be calculated by a timing interceptor
+      },
+    };
   }
 
   @Get()
@@ -102,7 +113,28 @@ export class DevicesController {
   @ApiOperation({
     summary: 'Get all devices',
     description:
-      'Retrieves all devices accessible to the current user with latest sensor data',
+      'Retrieves all devices accessible to the current user with latest sensor data and pagination support',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number for pagination',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search term to filter devices by name or ID',
+    example: 'Living Room',
   })
   @ApiResponse({
     status: 200,
@@ -168,9 +200,19 @@ export class DevicesController {
   async findOne(
     @Param('id') id: string,
     @CurrentUser() user: User,
-  ): Promise<DeviceResponseDto> {
+  ): Promise<DeviceDetailResponseDto> {
     const device = await this.devicesService.findOne(id, user);
-    return plainToClass(DeviceResponseDto, device);
+    const deviceResponse = plainToClass(DeviceResponseDto, device);
+    
+    return {
+      status: 'success',
+      data: deviceResponse,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        path: `/devices/${id}`,
+        executionTime: 0, // This would be calculated by a timing interceptor
+      },
+    };
   }
 
   @Patch(':id')
@@ -228,9 +270,19 @@ export class DevicesController {
     @Param('id') id: string,
     @Body() updateDeviceDto: UpdateDeviceDto,
     @CurrentUser() user: User,
-  ): Promise<DeviceResponseDto> {
+  ): Promise<UpdateDeviceResponseDto> {
     const device = await this.devicesService.update(id, updateDeviceDto, user);
-    return plainToClass(DeviceResponseDto, device);
+    const deviceResponse = plainToClass(DeviceResponseDto, device);
+    
+    return {
+      status: 'success',
+      data: deviceResponse,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        path: `/devices/${id}`,
+        executionTime: 0, // This would be calculated by a timing interceptor
+      },
+    };
   }
 
   @Delete(':id')
@@ -264,7 +316,19 @@ export class DevicesController {
   async remove(
     @Param('id') id: string,
     @CurrentUser() user: User,
-  ): Promise<void> {
-    return this.devicesService.remove(id, user);
+  ): Promise<DeleteDeviceResponseDto> {
+    await this.devicesService.remove(id, user);
+    
+    return {
+      status: 'success',
+      data: {
+        message: 'Device deleted successfully',
+      },
+      metadata: {
+        timestamp: new Date().toISOString(),
+        path: `/devices/${id}`,
+        executionTime: 0, // This would be calculated by a timing interceptor
+      },
+    };
   }
 }

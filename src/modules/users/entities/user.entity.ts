@@ -8,7 +8,7 @@ import {
   Index,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { Device } from '@/modules/devices/entities/device.entity';
+// Forward reference to avoid circular imports
 import { Calibration } from '@/modules/calibrations/entities/calibration.entity';
 import { WaterQualityEvent } from '@/modules/events/entities/water-quality-event.entity';
 import { Threshold } from '@/modules/thresholds/entities/threshold.entity';
@@ -73,8 +73,8 @@ export class User {
   updated_at: Date;
 
   // Relations
-  @OneToMany(() => Device, (device) => device.user)
-  devices: Device[];
+  @OneToMany('Device', 'user')
+  devices: any[];
 
   @OneToMany(() => Calibration, (calibration) => calibration.applied_by_user)
   calibrations: Calibration[];
