@@ -6,7 +6,9 @@ import helmet from 'helmet';
 import * as express from 'express';
 import { AllExceptionsFilter } from './core/common/filters/http-exception.filter';
 import { TransformInterceptor } from './core/common/interceptors/transform.interceptor';
+
 import { AppModule } from './app/app.module';
+import cookieParser from 'cookie-parser';
 
 function setupSwagger(app: INestApplication) {
   if (process.env.NODE_ENV !== 'production') {
@@ -42,6 +44,8 @@ async function bootstrap() {
     origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
   });
+
+  app.use(cookieParser());
 
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,

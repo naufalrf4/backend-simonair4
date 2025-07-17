@@ -8,6 +8,7 @@ import { DevicesModule } from '../devices/devices.module';
 import { CalibrationsModule } from '../calibrations/calibrations.module';
 import { AlertsModule } from '../alerts/alerts.module';
 import { ThresholdsModule } from '../thresholds/thresholds.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -16,10 +17,11 @@ import { ThresholdsModule } from '../thresholds/thresholds.module';
     forwardRef(() => CalibrationsModule),
     AlertsModule,
     forwardRef(() => ThresholdsModule),
+    EventsModule,
   ],
   controllers: [SensorsController],
   providers: [SensorsService, SensorDataRepository],
-  exports: [SensorsService],
+  exports: [SensorsService, SensorDataRepository],
 })
 
 export class SensorsModule {}

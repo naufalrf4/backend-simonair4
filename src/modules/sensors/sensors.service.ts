@@ -7,6 +7,7 @@ import { Calibration } from '../calibrations/entities/calibration.entity';
 import { AlertsService } from '../alerts/alerts.service';
 import { ThresholdsService } from '../thresholds/thresholds.service';
 import { Threshold } from '../thresholds/entities/threshold.entity';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class SensorsService {
@@ -20,13 +21,17 @@ export class SensorsService {
     private readonly alertsService: AlertsService,
     @Inject(forwardRef(() => ThresholdsService))
     private readonly thresholdsService: ThresholdsService,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async processAndSaveData(
     deviceId: string,
-    data: Partial<SensorData>,
+    data: Partial<SensorData> & { do?: any },
   ): Promise<SensorData> {
-    const calibratedData = await this.applyCalibration(deviceId, data);
+    const dataWithDoLevel = { ...data, do_level: data.do };
+    delete dataWithDoLevel.do;
+
+    const calibratedData = await this.applyCalibration(deviceId, dataWithDoLevel);
     const threshold = await this.getDeviceThreshold(deviceId);
     const processedData = this.calculateStatus(calibratedData, threshold);
 
@@ -36,10 +41,9 @@ export class SensorsService {
       time: data.timestamp ? new Date(data.timestamp) : new Date(),
     });
 
-    // The user is not available in this context, so we pass null.
-    // The alerts service will need to handle this case.
     await this.alertsService.evaluateThresholds(savedData);
 
+    this.eventsGateway.broadcast(deviceId, savedData);
     this.logger.log(`Processed and saved sensor data for device ${deviceId}`);
     return savedData;
   }
@@ -56,9 +60,9 @@ export class SensorsService {
 
     const calibratedData = JSON.parse(JSON.stringify(data)); // Deep copy
 
-    for (const sensorType of ['ph', 'tds', 'do']) {
+    for (const sensorType of ['ph', 'tds', 'do_level']) {
       if (calibratedData[sensorType] && calibratedData[sensorType].raw !== undefined) {
-        const calibration = this.findLatestCalibration(calibrations, sensorType);
+        const calibration = this.findLatestCalibration(calibrations, sensorType === 'do_level' ? 'do' : sensorType);
         if (calibration && calibration.calibration_data) {
           const { m, c } = calibration.calibration_data;
           if (typeof m === 'number' && typeof c === 'number') {
@@ -94,7 +98,7 @@ export class SensorsService {
       temperature: { temp_low: 25, temp_high: 30 },
       ph: { ph_good: 6.5, ph_bad: 7.5 },
       tds: { tds_good: 100, tds_bad: 500 },
-      do: { do_good: 5, do_bad: 8 },
+      do_level: { do_good: 5, do_bad: 8 },
     };
 
     const deviceThresholds = threshold ? threshold.thresholdData.threshold : {};
@@ -107,14 +111,14 @@ export class SensorsService {
           return { min: deviceThresholds.ph_good ?? defaultThresholds.ph.ph_good, max: deviceThresholds.ph_bad ?? defaultThresholds.ph.ph_bad };
         case 'tds':
           return { min: deviceThresholds.tds_good ?? defaultThresholds.tds.tds_good, max: deviceThresholds.tds_bad ?? defaultThresholds.tds.tds_bad };
-        case 'do':
-          return { min: deviceThresholds.do_good ?? defaultThresholds.do.do_good, max: deviceThresholds.do_bad ?? defaultThresholds.do.do_bad };
+        case 'do_level':
+          return { min: deviceThresholds.do_good ?? defaultThresholds.do_level.do_good, max: deviceThresholds.do_bad ?? defaultThresholds.do_level.do_bad };
         default:
           return null;
       }
     };
 
-    for (const sensorType of ['temperature', 'ph', 'tds', 'do']) {
+    for (const sensorType of ['temperature', 'ph', 'tds', 'do_level']) {
       if (processedData[sensorType]) {
         const thresholds = getThresholdsFor(sensorType);
         if (thresholds) {
@@ -148,12 +152,48 @@ export class SensorsService {
     return this.sensorDataRepository.findHistoricalData(deviceId, from, to);
   }
 
+  async getHistoricalDataWithPagination(
+    deviceId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      from?: Date;
+      to?: Date;
+      orderBy?: 'ASC' | 'DESC';
+    }
+  ): Promise<{ data: SensorData[], total: number, page: number, limit: number }> {
+    // Validate device exists and user has access
+    await this.devicesService.validateDevice(deviceId);
+
+    const [data, total] = await this.sensorDataRepository.findHistoricalDataWithPagination(
+      deviceId,
+      options
+    );
+
+    return {
+      data,
+      total,
+      page: options.page || 1,
+      limit: options.limit || 10,
+    };
+  }
+
+  async getLatestSensorData(deviceId: string): Promise<SensorData | null> {
+    // Validate device exists and user has access
+    await this.devicesService.validateDevice(deviceId);
+    
+    return this.sensorDataRepository.findLatestSensorData(deviceId);
+  }
+
   async getAggregatedData(
     deviceId: string,
     from: Date,
     to: Date,
     granularity: 'hourly' | 'daily',
   ): Promise<any[]> {
+    // Validate device exists and user has access
+    await this.devicesService.validateDevice(deviceId);
+    
     return this.sensorDataRepository.findAggregatedData(
       deviceId,
       from,
@@ -161,4 +201,40 @@ export class SensorsService {
       granularity,
     );
   }
+
+  async getAggregatedDataWithPagination(
+    deviceId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      from: Date;
+      to: Date;
+      granularity: 'hourly' | 'daily';
+    }
+  ): Promise<{ data: any[], total: number, page: number, limit: number }> {
+    // Validate device exists and user has access
+    await this.devicesService.validateDevice(deviceId);
+
+    const { page = 1, limit = 10, from, to, granularity } = options;
+    
+    const allData = await this.sensorDataRepository.findAggregatedData(
+      deviceId,
+      from,
+      to,
+      granularity,
+    );
+
+    const total = allData.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const data = allData.slice(startIndex, endIndex);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
+  }
 }
+

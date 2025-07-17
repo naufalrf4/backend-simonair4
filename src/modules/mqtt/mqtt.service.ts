@@ -152,8 +152,7 @@ export class MqttService implements OnModuleInit {
     }
 
     await this.devicesService.updateLastSeen(deviceId);
-    const processedData = await this.sensorsService.processAndSaveData(deviceId, data);
-    this.eventsGateway.broadcast(deviceId, processedData);
+    await this.sensorsService.processAndSaveData(deviceId, data);
     await this.cacheManager.set(`last_message_${deviceId}`, now, 10);
   }
 

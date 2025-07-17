@@ -32,6 +32,36 @@ export class SensorDataRepository extends Repository<SensorData> {
       .getMany();
   }
 
+  async findHistoricalDataWithPagination(
+    deviceId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      from?: Date;
+      to?: Date;
+      orderBy?: 'ASC' | 'DESC';
+    },
+  ): Promise<[SensorData[], number]> {
+    const { page = 1, limit = 10, from, to, orderBy = 'DESC' } = options;
+
+    const query = this.createQueryBuilder('sensor_data')
+      .where('sensor_data.device_id = :deviceId', { deviceId });
+
+    if (from && to) {
+      query.andWhere('sensor_data.time BETWEEN :from AND :to', { from, to });
+    } else if (from) {
+      query.andWhere('sensor_data.time >= :from', { from });
+    } else if (to) {
+      query.andWhere('sensor_data.time <= :to', { to });
+    }
+
+    return query
+      .orderBy('sensor_data.time', orderBy)
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+  }
+
   async findAggregatedData(
     deviceId: string,
     from: Date,
@@ -54,5 +84,12 @@ export class SensorDataRepository extends Repository<SensorData> {
       .groupBy('bucket')
       .orderBy('bucket', 'DESC')
       .getRawMany();
+  }
+
+  async findLatestSensorData(deviceId: string): Promise<SensorData | null> {
+    return this.createQueryBuilder('sensor_data')
+      .where('sensor_data.device_id = :deviceId', { deviceId })
+      .orderBy('sensor_data.time', 'DESC')
+      .getOne();
   }
 }

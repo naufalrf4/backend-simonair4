@@ -35,9 +35,44 @@ export class DevicesService {
     }
   }
 
-  async getDevices(options: any): Promise<{ devices: Device[], total: number }> {
+   async getDevices(options: any): Promise<{ devices: any[], total: number }> {
     const [devices, total] = await this.devicesRepository.findWithPagination(options);
-    return { devices, total };
+
+    const mappedDevices = devices.map((device) => {
+      const latestSensorData = (device as any).latestSensorData;
+      
+      // Format latest sensor data if it exists
+      const formattedLatestSensorData = latestSensorData ? {
+        time: latestSensorData.time,
+        timestamp: latestSensorData.timestamp,
+        temperature: latestSensorData.temperature,
+        ph: latestSensorData.ph,
+        tds: latestSensorData.tds,
+        do_level: latestSensorData.do_level,
+      } : null;
+
+      const user = device.user ? { 
+        id: device.user.id, 
+        name: device.user.full_name 
+      } : null;
+
+      return {
+        id: device.id,
+        device_id: device.device_id,
+        device_name: device.device_name,
+        location: device.location,
+        aquarium_size: device.aquarium_size,
+        glass_type: device.glass_type,
+        fish_count: device.fish_count,
+        is_active: device.is_active,
+        last_seen: device.last_seen,
+        created_at: device.created_at,
+        user,
+        latestSensorData: formattedLatestSensorData,
+      };
+    });
+
+    return { devices: mappedDevices, total };
   }
 
   async findAll(user: User): Promise<Device[]> {
