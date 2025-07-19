@@ -19,7 +19,8 @@ COPY --from=dependencies /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 COPY .env ./.env
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+# Sesuaikan dengan path hasil build
+CMD ["node", "dist/src/main"]

@@ -117,7 +117,7 @@ export class SensorsService {
     deviceId: string,
   ): Promise<Threshold | null> {
     try {
-      // No user is passed for internal service calls
+      
       return await this.thresholdsService.getThreshold(deviceId);
     } catch (error) {
       if (error instanceof NotFoundException) {
