@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateWaterQualityEvents1752127040009 implements MigrationInterface {
+export class CreateWaterQualityEvents1752127040009
+  implements MigrationInterface
+{
   name = 'CreateWaterQualityEvents1752127040009';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -19,13 +21,21 @@ export class CreateWaterQualityEvents1752127040009 implements MigrationInterface
       );
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_water_quality_events_device_id_event_date" ON "water_quality_events" ("device_id", "event_date")`);
-    await queryRunner.query(`CREATE INDEX "IDX_water_quality_events_event_type_event_date" ON "water_quality_events" ("event_type", "event_date")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_water_quality_events_device_id_event_date" ON "water_quality_events" ("device_id", "event_date")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_water_quality_events_event_type_event_date" ON "water_quality_events" ("event_type", "event_date")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "IDX_water_quality_events_event_type_event_date"`);
-    await queryRunner.query(`DROP INDEX "IDX_water_quality_events_device_id_event_date"`);
+    await queryRunner.query(
+      `DROP INDEX "IDX_water_quality_events_event_type_event_date"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "IDX_water_quality_events_device_id_event_date"`,
+    );
     await queryRunner.query(`DROP TABLE "water_quality_events"`);
   }
 }

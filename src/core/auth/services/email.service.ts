@@ -5,13 +5,18 @@ import { ConfigService } from '@nestjs/config';
 export class EmailService {
   constructor(private readonly configService: ConfigService) {}
 
-  async sendPasswordResetEmail(email: string, resetLink: string): Promise<void> {
+  async sendPasswordResetEmail(
+    email: string,
+    resetLink: string,
+  ): Promise<void> {
     // TODO: Implement email sending using SMTP configuration
-    console.log(`Sending password reset email to ${email} with link: ${resetLink}`);
-    
+    console.log(
+      `Sending password reset email to ${email} with link: ${resetLink}`,
+    );
+
     // This is where you would integrate with your email service
     // For example, using nodemailer or another email service
-    
+
     // const mailOptions = {
     //   from: 'noreply@simonair.com',
     //   to: email,
@@ -29,7 +34,7 @@ export class EmailService {
   async sendPasswordChangedEmail(email: string): Promise<void> {
     // TODO: Implement email sending
     console.log(`Sending password changed notification to ${email}`);
-    
+
     // const mailOptions = {
     //   from: 'noreply@simonair.com',
     //   to: email,
@@ -42,10 +47,15 @@ export class EmailService {
     // };
   }
 
-  async sendVerificationEmail(email: string, verificationLink: string): Promise<void> {
+  async sendVerificationEmail(
+    email: string,
+    verificationLink: string,
+  ): Promise<void> {
     // TODO: Implement email sending
-    console.log(`Sending verification email to ${email} with link: ${verificationLink}`);
-    
+    console.log(
+      `Sending verification email to ${email} with link: ${verificationLink}`,
+    );
+
     // const mailOptions = {
     //   from: 'noreply@simonair.com',
     //   to: email,

@@ -17,8 +17,12 @@ export class CreateSensorData1752127036814 implements MigrationInterface {
       );
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_sensor_data_time_device_id" ON "sensor_data" ("time", "device_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_sensor_data_device_id_time" ON "sensor_data" ("device_id", "time")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_sensor_data_time_device_id" ON "sensor_data" ("time", "device_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_sensor_data_device_id_time" ON "sensor_data" ("device_id", "time")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

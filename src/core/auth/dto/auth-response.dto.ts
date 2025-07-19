@@ -31,9 +31,9 @@ export class UserResponseData {
 }
 
 export class AuthResponseData {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'JWT access token' 
+    description: 'JWT access token',
   })
   accessToken: string;
 
@@ -42,9 +42,9 @@ export class AuthResponseData {
 }
 
 export class TokenResponseData {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: 'JWT access token' 
+    description: 'JWT access token',
   })
   accessToken: string;
 }
@@ -55,9 +55,9 @@ export class MessageResponseData {
 }
 
 export class GoogleAuthUrlData {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'https://accounts.google.com/o/oauth2/v2/auth?...',
-    description: 'Google OAuth URL' 
+    description: 'Google OAuth URL',
   })
   url: string;
 }

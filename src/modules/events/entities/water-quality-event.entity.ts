@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { Device } from '../../devices/entities/device.entity';
 import { User } from '../../users/entities/user.entity';
 
@@ -28,11 +36,11 @@ export class WaterQualityEvent {
   created_at: Date;
 
   // Relations
-  @ManyToOne(() => Device, device => device.water_quality_events)
+  @ManyToOne(() => Device, (device) => device.water_quality_events)
   @JoinColumn({ name: 'device_id', referencedColumnName: 'device_id' })
   device: Device;
 
-  @ManyToOne(() => User, user => user.water_quality_events)
+  @ManyToOne(() => User, (user) => user.water_quality_events)
   @JoinColumn({ name: 'created_by' })
   created_by_user: User;
 }

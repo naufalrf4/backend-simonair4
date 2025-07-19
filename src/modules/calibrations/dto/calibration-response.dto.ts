@@ -18,4 +18,16 @@ export class CalibrationResponseDto {
 
   @Expose()
   applied_by: string;
+
+  @Expose()
+  mqtt_published_at?: Date;
+
+  @Expose()
+  mqtt_ack_received_at?: Date;
+
+  @Expose()
+  mqtt_ack_status?: string;
+
+  @Expose()
+  mqtt_retry_count?: number;
 }

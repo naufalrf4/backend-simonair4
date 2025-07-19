@@ -1,18 +1,26 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength, Matches, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  MaxLength,
+  Matches,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginRequestDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'user@example.com',
-    description: 'User email address' 
+    description: 'User email address',
   })
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })
   email: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'StrongPassword123!',
-    description: 'User password (minimum 8 characters)' 
+    description: 'User password (minimum 8 characters)',
   })
   @IsString({ message: 'Password must be a string' })
   @IsNotEmpty({ message: 'Password is required' })
@@ -21,17 +29,18 @@ export class LoginRequestDto {
 }
 
 export class RegisterRequestDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'newuser@example.com',
-    description: 'User email address' 
+    description: 'User email address',
   })
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })
   email: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'StrongPassword123!',
-    description: 'User password (minimum 8 characters, must contain uppercase, lowercase, number and special character)' 
+    description:
+      'User password (minimum 8 characters, must contain uppercase, lowercase, number and special character)',
   })
   @IsString({ message: 'Password must be a string' })
   @IsNotEmpty({ message: 'Password is required' })
@@ -44,9 +53,9 @@ export class RegisterRequestDto {
   // )
   password: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'John Doe',
-    description: 'User full name' 
+    description: 'User full name',
   })
   @IsString({ message: 'Full name must be a string' })
   @IsNotEmpty({ message: 'Full name is required' })
@@ -55,9 +64,9 @@ export class RegisterRequestDto {
 }
 
 export class ForgotPasswordRequestDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'user@example.com',
-    description: 'Email address to send reset link' 
+    description: 'Email address to send reset link',
   })
   @IsEmail({}, { message: 'Please provide a valid email address' })
   @IsNotEmpty({ message: 'Email is required' })
@@ -65,9 +74,9 @@ export class ForgotPasswordRequestDto {
 }
 
 export class ValidateResetTokenRequestDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'Reset token from email' 
+    description: 'Reset token from email',
   })
   @IsString({ message: 'Token must be a string' })
   @IsNotEmpty({ message: 'Token is required' })
@@ -75,32 +84,31 @@ export class ValidateResetTokenRequestDto {
 }
 
 export class ResetPasswordRequestDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'Reset token from email' 
+    description: 'Reset token from email',
   })
   @IsString({ message: 'Token must be a string' })
   @IsNotEmpty({ message: 'Token is required' })
   token: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'NewStrongPassword123!',
-    description: 'New password (minimum 8 characters, must contain uppercase, lowercase, number and special character)' 
+    description:
+      'New password (minimum 8 characters, must contain uppercase, lowercase, number and special character)',
   })
   @IsString({ message: 'Password must be a string' })
   @IsNotEmpty({ message: 'Password is required' })
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-    {
-      message: 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
-    }
-  )
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character',
+  })
   password: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'NewStrongPassword123!',
-    description: 'Confirm new password' 
+    description: 'Confirm new password',
   })
   @IsString({ message: 'Confirm password must be a string' })
   @IsNotEmpty({ message: 'Confirm password is required' })
@@ -108,18 +116,18 @@ export class ResetPasswordRequestDto {
 }
 
 export class GoogleCallbackRequestDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: '4/0AX4XfWh...',
-    description: 'Authorization code from Google' 
+    description: 'Authorization code from Google',
   })
   @IsString()
   @IsNotEmpty()
   code: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'random-state-string',
     description: 'State parameter for CSRF protection',
-    required: false 
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -127,10 +135,10 @@ export class GoogleCallbackRequestDto {
 }
 
 export class GoogleAuthRequestDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'http://localhost:3000/auth/callback',
     description: 'Redirect URI after Google authentication',
-    required: false 
+    required: false,
   })
   @IsString()
   @IsOptional()

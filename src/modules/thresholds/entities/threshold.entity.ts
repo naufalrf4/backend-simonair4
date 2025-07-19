@@ -1,5 +1,5 @@
-import { Device } from '@/modules/devices/entities/device.entity';
-import { User } from '@/modules/users/entities/user.entity';
+import { Device } from '../../devices/entities/device.entity';
+import { User } from '../../users/entities/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,9 +7,12 @@ import {
   JoinColumn,
   ManyToOne,
   OneToOne,
+  Index,
 } from 'typeorm';
 
 @Entity('thresholds')
+@Index(['deviceId'])
+@Index(['ackStatus', 'updatedAt'])
 export class Threshold {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -26,7 +29,12 @@ export class Threshold {
   @Column({ name: 'updated_by', type: 'uuid', nullable: true })
   updatedBy: string | null;
 
-  @Column({ name: 'ack_status', type: 'varchar', length: 20, default: 'pending' })
+  @Column({
+    name: 'ack_status',
+    type: 'varchar',
+    length: 20,
+    default: 'pending',
+  })
   ackStatus: string;
 
   @Column({ name: 'ack_received_at', type: 'timestamp', nullable: true })

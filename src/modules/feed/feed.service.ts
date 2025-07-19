@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { FeedRepository } from './feed.repository';
 import { DevicesService } from '../devices/devices.service';
 import { FishService } from '../fish/fish.service';
@@ -7,6 +12,8 @@ import { CreateFeedDto } from './dto/create-feed.dto';
 import { UpdateFeedDto } from './dto/update-feed.dto';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../users/entities/user.entity';
+import { FeedAnalyticsService } from './services/feed-analytics.service';
+import { FeedAnalyticsResponseDto } from './dto/feed-analytics-response.dto';
 
 @Injectable()
 export class FeedService {
@@ -14,18 +21,26 @@ export class FeedService {
     private readonly feedRepository: FeedRepository,
     private readonly devicesService: DevicesService,
     private readonly fishService: FishService,
+    private readonly feedAnalyticsService: FeedAnalyticsService,
   ) {}
 
   async create(user: User, createFeedDto: CreateFeedDto): Promise<FeedData> {
     await this.validateDeviceAccess(user, createFeedDto.device_id);
     if (!['natural', 'artificial'].includes(createFeedDto.feed_type)) {
-      throw new BadRequestException('Invalid feed type. Must be "natural" or "artificial".');
+      throw new BadRequestException(
+        'Invalid feed type. Must be "natural" or "artificial".',
+      );
     }
     const feedData = this.feedRepository.create(createFeedDto);
     return this.feedRepository.save(feedData);
   }
 
-  async findAll(user: User, deviceId: string, startDate?: Date, endDate?: Date): Promise<FeedData[]> {
+  async findAll(
+    user: User,
+    deviceId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<FeedData[]> {
     await this.validateDeviceAccess(user, deviceId);
     return this.feedRepository.findByDeviceId(deviceId, startDate, endDate);
   }
@@ -39,7 +54,11 @@ export class FeedService {
     return feedData;
   }
 
-  async update(user: User, id: string, updateFeedDto: UpdateFeedDto): Promise<FeedData> {
+  async update(
+    user: User,
+    id: string,
+    updateFeedDto: UpdateFeedDto,
+  ): Promise<FeedData> {
     const feedData = await this.findOne(user, id);
     Object.assign(feedData, updateFeedDto);
     return this.feedRepository.save(feedData);
@@ -50,38 +69,30 @@ export class FeedService {
     await this.feedRepository.remove(feedData.id);
   }
 
-  async updateSchedule(user: User, id: string, schedule: Record<string, any>): Promise<FeedData> {
+  async updateSchedule(
+    user: User,
+    id: string,
+    schedule: Record<string, any>,
+  ): Promise<FeedData> {
     const feedData = await this.findOne(user, id);
     // Add schedule validation logic here if needed
     return this.feedRepository.updateSchedule(id, schedule);
   }
 
-  async getAnalytics(user: User, deviceId: string): Promise<any> {
+  async getAnalytics(
+    user: User,
+    deviceId: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<FeedAnalyticsResponseDto> {
     await this.validateDeviceAccess(user, deviceId);
-    const feedHistory = await this.findAll(user, deviceId);
-    const growthHistory = await this.fishService.findAll(user, deviceId);
-
-    if (feedHistory.length === 0 || growthHistory.length === 0) {
-      return {
-        feedEfficiency: 0,
-        correlation: 'Insufficient data',
-        summary: 'Not enough data to generate analytics.',
-      };
-    }
-
-    // This is a simplified example. A real implementation would require more complex calculations.
-    const totalFeed = feedHistory.length;
-    const totalGrowth = growthHistory.length;
-    const feedEfficiency = totalGrowth / totalFeed;
-
-    return {
-      feedEfficiency: feedEfficiency.toFixed(2),
-      correlation: 'Positive', // Simplified
-      summary: `Feed efficiency is ${feedEfficiency.toFixed(2)}.`,
-    };
+    return this.feedAnalyticsService.calculateFeedAnalytics(user, deviceId, startDate, endDate);
   }
 
-  private async validateDeviceAccess(user: User, deviceId: string): Promise<void> {
+  private async validateDeviceAccess(
+    user: User,
+    deviceId: string,
+  ): Promise<void> {
     if (user.role === UserRole.ADMIN || user.role === UserRole.SUPERUSER) {
       return;
     }

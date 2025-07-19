@@ -1,4 +1,3 @@
-
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -19,6 +18,7 @@ import { CalibrationsModule } from '@/modules/calibrations/calibrations.module';
 import { FishModule } from '@/modules/fish/fish.module';
 import { ThresholdsModule } from '@/modules/thresholds/thresholds.module';
 import { AckModule } from '@/modules/ack/ack.module';
+import { ManualMeasurementsModule } from '@/modules/manual-measurements/manual-measurements.module';
 
 @Module({
   imports: [
@@ -26,10 +26,12 @@ import { AckModule } from '@/modules/ack/ack.module';
       isGlobal: true,
       ttl: 60000,
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60,
-      limit: 10,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 10,
+      },
+    ]),
     CoreModule,
     AuthModule,
     UsersModule,
@@ -43,6 +45,7 @@ import { AckModule } from '@/modules/ack/ack.module';
     AlertsModule,
     ThresholdsModule,
     AckModule,
+    ManualMeasurementsModule,
   ],
   controllers: [AppController],
   providers: [

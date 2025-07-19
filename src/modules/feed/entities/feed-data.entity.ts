@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { Device } from '../../devices/entities/device.entity';
 
 @Entity('feed_data')
@@ -16,6 +24,9 @@ export class FeedData {
   @Column({ type: 'varchar', length: 50 })
   feed_type: string;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  feed_amount_kg: number;
+
   @Column({ type: 'jsonb', nullable: true })
   feeding_schedule: Record<string, any>;
 
@@ -23,7 +34,7 @@ export class FeedData {
   created_at: Date;
 
   // Relations
-  @ManyToOne(() => Device, device => device.feed_data)
+  @ManyToOne(() => Device, (device) => device.feed_data)
   @JoinColumn({ name: 'device_id', referencedColumnName: 'device_id' })
   device: Device;
 }

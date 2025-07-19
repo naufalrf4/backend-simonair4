@@ -44,8 +44,10 @@ export class SensorDataRepository extends Repository<SensorData> {
   ): Promise<[SensorData[], number]> {
     const { page = 1, limit = 10, from, to, orderBy = 'DESC' } = options;
 
-    const query = this.createQueryBuilder('sensor_data')
-      .where('sensor_data.device_id = :deviceId', { deviceId });
+    const query = this.createQueryBuilder('sensor_data').where(
+      'sensor_data.device_id = :deviceId',
+      { deviceId },
+    );
 
     if (from && to) {
       query.andWhere('sensor_data.time BETWEEN :from AND :to', { from, to });
@@ -75,10 +77,10 @@ export class SensorDataRepository extends Repository<SensorData> {
 
     return this.createQueryBuilder('sensor_data')
       .select(timeBucket, 'bucket')
-      .addSelect('avg((ph->>\'value\')::numeric)', 'avg_ph')
-      .addSelect('avg((temperature->>\'value\')::numeric)', 'avg_temperature')
-      .addSelect('avg((tds->>\'value\')::numeric)', 'avg_tds')
-      .addSelect('avg((do_level->>\'value\')::numeric)', 'avg_do_level')
+      .addSelect("avg((ph->>'value')::numeric)", 'avg_ph')
+      .addSelect("avg((temperature->>'value')::numeric)", 'avg_temperature')
+      .addSelect("avg((tds->>'value')::numeric)", 'avg_tds')
+      .addSelect("avg((do_level->>'value')::numeric)", 'avg_do_level')
       .where('device_id = :deviceId', { deviceId })
       .andWhere('time BETWEEN :from AND :to', { from, to })
       .groupBy('bucket')

@@ -17,7 +17,9 @@ export class CreateFeedData1752127041110 implements MigrationInterface {
       );
     `);
 
-    await queryRunner.query(`CREATE INDEX "IDX_feed_data_device_id_created_at" ON "feed_data" ("device_id", "created_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_feed_data_device_id_created_at" ON "feed_data" ("device_id", "created_at")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

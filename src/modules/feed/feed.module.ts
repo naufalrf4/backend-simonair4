@@ -6,10 +6,11 @@ import { FeedService } from './feed.service';
 import { FeedRepository } from './feed.repository';
 import { DevicesModule } from '../devices/devices.module';
 import { FishModule } from '../fish/fish.module';
+import { FeedAnalyticsService } from './services/feed-analytics.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([FeedData]), DevicesModule, FishModule],
   controllers: [FeedController],
-  providers: [FeedService, FeedRepository],
+  providers: [FeedService, FeedRepository, FeedAnalyticsService],
 })
 export class FeedModule {}

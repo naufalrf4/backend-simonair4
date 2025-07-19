@@ -8,7 +8,7 @@ export class TooManyRequestsException extends HttpException {
         message: message || 'Too many requests',
         error: 'Too Many Requests',
       },
-      HttpStatus.TOO_MANY_REQUESTS
+      HttpStatus.TOO_MANY_REQUESTS,
     );
   }
 }

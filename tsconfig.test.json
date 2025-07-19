@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.e2e-spec.ts", 
+    "test/**/*.ts",
+    "test/**/*.js",
+    "src/**/*.entity.ts",
+    "src/**/*.dto.ts",
+    "src/**/*.service.ts",
+    "src/**/*.controller.ts",
+    "src/**/*.module.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage"
+  ]
+}

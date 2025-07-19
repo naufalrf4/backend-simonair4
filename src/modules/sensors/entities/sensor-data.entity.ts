@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { Device } from '../../devices/entities/device.entity';
 
 interface SensorReading {
@@ -35,7 +42,7 @@ export class SensorData {
   do_level: SensorReading;
 
   // Relations
-  @ManyToOne(() => Device, device => device.sensor_data)
+  @ManyToOne(() => Device, (device) => device.sensor_data)
   @JoinColumn({ name: 'device_id', referencedColumnName: 'device_id' })
   device: Device;
 }

@@ -15,7 +15,8 @@ import { FishGrowth } from '../../fish/entities/fish-growth.entity';
 import { Calibration } from '../../calibrations/entities/calibration.entity';
 import { WaterQualityEvent } from '../../events/entities/water-quality-event.entity';
 import { FeedData } from '../../feed/entities/feed-data.entity';
-import { Threshold } from '@/modules/thresholds/entities/threshold.entity';
+import { Threshold } from '../../thresholds/entities/threshold.entity';
+import { ManualMeasurement } from '../../manual-measurements/entities/manual-measurement.entity';
 
 @Entity('devices')
 @Index(['device_id'], { unique: true })
@@ -73,6 +74,9 @@ export class Device {
 
   @OneToMany(() => FeedData, (feedData) => feedData.device)
   feed_data: FeedData[];
+
+  @OneToMany(() => ManualMeasurement, (manualMeasurement) => manualMeasurement.device)
+  manual_measurements: ManualMeasurement[];
 
   @OneToOne(() => Threshold, (threshold) => threshold.device)
   threshold: Threshold;

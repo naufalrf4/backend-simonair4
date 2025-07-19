@@ -6,7 +6,10 @@ import { Request } from 'express';
 import { UsersService } from '@/modules/users/users.service';
 
 @Injectable()
-export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class RefreshJwtStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
@@ -18,20 +21,22 @@ export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
         },
       ]),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_REFRESH_SECRET') || 'default-refresh-secret',
+      secretOrKey:
+        configService.get<string>('JWT_REFRESH_SECRET') ||
+        'default-refresh-secret',
       passReqToCallback: true,
     });
   }
 
   async validate(req: Request, payload: any) {
     const refreshToken = req?.cookies?.refresh_token;
-    
+
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token not found');
     }
 
     const user = await this.usersService.findOne(payload.sub);
-    
+
     if (!user || !user.is_active) {
       throw new UnauthorizedException('User not found or inactive');
     }

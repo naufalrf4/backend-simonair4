@@ -13,10 +13,7 @@ export class FileGeneratorUtil {
     return Buffer.from(csv);
   }
 
-  static async generateExcel(
-    data: any[],
-    title: string,
-  ): Promise<Buffer> {
+  static async generateExcel(data: any[], title: string): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(title);
 
@@ -31,10 +28,7 @@ export class FileGeneratorUtil {
     return Buffer.from(await workbook.xlsx.writeBuffer());
   }
 
-  static async generatePdf(
-    data: any[],
-    title: string,
-  ): Promise<Buffer> {
+  static async generatePdf(data: any[], title: string): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
       const doc = new PDFDocument();
       const buffers: any[] = [];

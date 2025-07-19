@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { SensorDataRepository } from './sensor-data.repository';
 import { SensorData } from './entities/sensor-data.entity';
 import { DevicesService } from '../devices/devices.service';
@@ -28,10 +34,14 @@ export class SensorsService {
     deviceId: string,
     data: Partial<SensorData> & { do?: any },
   ): Promise<SensorData> {
-    const dataWithDoLevel = { ...data, do_level: data.do };
-    delete dataWithDoLevel.do;
+    // Remove the redundant mapping since MQTT service already handles do -> do_level conversion
+    const cleanedData = { ...data };
+    delete cleanedData.do; // Remove do field if it exists
 
-    const calibratedData = await this.applyCalibration(deviceId, dataWithDoLevel);
+    const calibratedData = await this.applyCalibration(
+      deviceId,
+      cleanedData,
+    );
     const threshold = await this.getDeviceThreshold(deviceId);
     const processedData = this.calculateStatus(calibratedData, threshold);
 
@@ -54,19 +64,43 @@ export class SensorsService {
   ): Promise<Partial<SensorData>> {
     const calibrations = await this.calibrationsService.findAll(deviceId);
     if (calibrations.length === 0) {
-      this.logger.warn(`No calibrations found for device ${deviceId}. Using raw values.`);
+      this.logger.warn(
+        `No calibrations found for device ${deviceId}. Using raw values.`,
+      );
       return data;
     }
 
     const calibratedData = JSON.parse(JSON.stringify(data)); // Deep copy
 
     for (const sensorType of ['ph', 'tds', 'do_level']) {
-      if (calibratedData[sensorType] && calibratedData[sensorType].raw !== undefined) {
-        const calibration = this.findLatestCalibration(calibrations, sensorType === 'do_level' ? 'do' : sensorType);
+      if (
+        calibratedData[sensorType] &&
+        calibratedData[sensorType].raw !== undefined
+      ) {
+        // Check if device already provided calibrated values
+        const deviceHasCalibratedValue = calibratedData[sensorType].calibrated !== undefined;
+        const deviceHasCalibratedOk = calibratedData[sensorType].calibrated_ok !== undefined;
+        
+        // If device already provided calibrated values, use them
+        if (deviceHasCalibratedValue) {
+          // Device has already provided calibrated values, preserve them
+          this.logger.debug(
+            `Device ${deviceId} provided calibrated value for ${sensorType}: ${calibratedData[sensorType].calibrated}`,
+          );
+          // Keep the device's calibrated value and calibrated_ok status
+          continue;
+        }
+        
+        // Otherwise, apply backend calibration
+        const calibration = this.findLatestCalibration(
+          calibrations,
+          sensorType === 'do_level' ? 'do' : sensorType,
+        );
         if (calibration && calibration.calibration_data) {
           const { m, c } = calibration.calibration_data;
           if (typeof m === 'number' && typeof c === 'number') {
-            calibratedData[sensorType].calibrated = calibratedData[sensorType].raw * m + c;
+            calibratedData[sensorType].calibrated =
+              calibratedData[sensorType].raw * m + c;
             calibratedData[sensorType].calibrated_ok = true;
           } else {
             calibratedData[sensorType].calibrated_ok = false;
@@ -79,20 +113,27 @@ export class SensorsService {
     return calibratedData;
   }
 
-  private async getDeviceThreshold(deviceId: string): Promise<Threshold | null> {
+  private async getDeviceThreshold(
+    deviceId: string,
+  ): Promise<Threshold | null> {
     try {
       // No user is passed for internal service calls
       return await this.thresholdsService.getThreshold(deviceId);
     } catch (error) {
       if (error instanceof NotFoundException) {
-        this.logger.warn(`No thresholds found for device ${deviceId}. Using default values.`);
+        this.logger.warn(
+          `No thresholds found for device ${deviceId}. Using default values.`,
+        );
         return null;
       }
       throw error;
     }
   }
 
-  private calculateStatus(data: Partial<SensorData>, threshold: Threshold | null): Partial<SensorData> {
+  private calculateStatus(
+    data: Partial<SensorData>,
+    threshold: Threshold | null,
+  ): Partial<SensorData> {
     const processedData = { ...data };
     const defaultThresholds = {
       temperature: { temp_low: 25, temp_high: 30 },
@@ -106,13 +147,29 @@ export class SensorsService {
     const getThresholdsFor = (sensorType: string) => {
       switch (sensorType) {
         case 'temperature':
-          return { min: deviceThresholds.temp_low ?? defaultThresholds.temperature.temp_low, max: deviceThresholds.temp_high ?? defaultThresholds.temperature.temp_high };
+          return {
+            min:
+              deviceThresholds.temp_low ??
+              defaultThresholds.temperature.temp_low,
+            max:
+              deviceThresholds.temp_high ??
+              defaultThresholds.temperature.temp_high,
+          };
         case 'ph':
-          return { min: deviceThresholds.ph_good ?? defaultThresholds.ph.ph_good, max: deviceThresholds.ph_bad ?? defaultThresholds.ph.ph_bad };
+          return {
+            min: deviceThresholds.ph_good ?? defaultThresholds.ph.ph_good,
+            max: deviceThresholds.ph_bad ?? defaultThresholds.ph.ph_bad,
+          };
         case 'tds':
-          return { min: deviceThresholds.tds_good ?? defaultThresholds.tds.tds_good, max: deviceThresholds.tds_bad ?? defaultThresholds.tds.tds_bad };
+          return {
+            min: deviceThresholds.tds_good ?? defaultThresholds.tds.tds_good,
+            max: deviceThresholds.tds_bad ?? defaultThresholds.tds.tds_bad,
+          };
         case 'do_level':
-          return { min: deviceThresholds.do_good ?? defaultThresholds.do_level.do_good, max: deviceThresholds.do_bad ?? defaultThresholds.do_level.do_bad };
+          return {
+            min: deviceThresholds.do_good ?? defaultThresholds.do_level.do_good,
+            max: deviceThresholds.do_bad ?? defaultThresholds.do_level.do_bad,
+          };
         default:
           return null;
       }
@@ -122,7 +179,10 @@ export class SensorsService {
       if (processedData[sensorType]) {
         const thresholds = getThresholdsFor(sensorType);
         if (thresholds) {
-          const value = processedData[sensorType].calibrated ?? processedData[sensorType].value ?? processedData[sensorType].raw;
+          const value =
+            processedData[sensorType].calibrated ??
+            processedData[sensorType].value ??
+            processedData[sensorType].raw;
           if (value !== undefined) {
             processedData[sensorType].status =
               value >= thresholds.min && value <= thresholds.max
@@ -160,15 +220,21 @@ export class SensorsService {
       from?: Date;
       to?: Date;
       orderBy?: 'ASC' | 'DESC';
-    }
-  ): Promise<{ data: SensorData[], total: number, page: number, limit: number }> {
+    },
+  ): Promise<{
+    data: SensorData[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     // Validate device exists and user has access
     await this.devicesService.validateDevice(deviceId);
 
-    const [data, total] = await this.sensorDataRepository.findHistoricalDataWithPagination(
-      deviceId,
-      options
-    );
+    const [data, total] =
+      await this.sensorDataRepository.findHistoricalDataWithPagination(
+        deviceId,
+        options,
+      );
 
     return {
       data,
@@ -181,7 +247,7 @@ export class SensorsService {
   async getLatestSensorData(deviceId: string): Promise<SensorData | null> {
     // Validate device exists and user has access
     await this.devicesService.validateDevice(deviceId);
-    
+
     return this.sensorDataRepository.findLatestSensorData(deviceId);
   }
 
@@ -193,7 +259,7 @@ export class SensorsService {
   ): Promise<any[]> {
     // Validate device exists and user has access
     await this.devicesService.validateDevice(deviceId);
-    
+
     return this.sensorDataRepository.findAggregatedData(
       deviceId,
       from,
@@ -210,13 +276,13 @@ export class SensorsService {
       from: Date;
       to: Date;
       granularity: 'hourly' | 'daily';
-    }
-  ): Promise<{ data: any[], total: number, page: number, limit: number }> {
+    },
+  ): Promise<{ data: any[]; total: number; page: number; limit: number }> {
     // Validate device exists and user has access
     await this.devicesService.validateDevice(deviceId);
 
     const { page = 1, limit = 10, from, to, granularity } = options;
-    
+
     const allData = await this.sensorDataRepository.findAggregatedData(
       deviceId,
       from,
@@ -237,4 +303,3 @@ export class SensorsService {
     };
   }
 }
-

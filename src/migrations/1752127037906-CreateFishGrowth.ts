@@ -26,7 +26,9 @@ export class CreateFishGrowth1752127037906 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "IDX_fish_growth_device_id_measurement_date"`);
+    await queryRunner.query(
+      `DROP INDEX "IDX_fish_growth_device_id_measurement_date"`,
+    );
     await queryRunner.query(`DROP TABLE "fish_growth"`);
   }
 }

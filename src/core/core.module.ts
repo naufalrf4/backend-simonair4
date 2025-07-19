@@ -5,6 +5,7 @@ import { validate } from './config/env.validation';
 import databaseConfig from './config/database.config';
 import mqttConfig from './config/mqtt.config';
 import { LoggerModule } from './logger/logger.module';
+import { CommonModule } from './common/common.module';
 
 @Global()
 @Module({
@@ -27,8 +28,8 @@ import { LoggerModule } from './logger/logger.module';
       inject: [ConfigService],
     }),
     LoggerModule,
+    CommonModule,
   ],
-  exports: [ConfigModule, TypeOrmModule, LoggerModule],
+  exports: [ConfigModule, TypeOrmModule, LoggerModule, CommonModule],
 })
-
 export class CoreModule {}

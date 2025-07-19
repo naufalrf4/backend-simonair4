@@ -1,4 +1,13 @@
-import { IsOptional, IsEnum, IsString, IsBoolean, IsInt, Min, Max, IsDate } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsString,
+  IsBoolean,
+  IsInt,
+  Min,
+  Max,
+  IsDate,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { UserRole } from '@/modules/users/entities/user.entity';
 

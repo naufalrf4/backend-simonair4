@@ -1,0 +1,27 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@/(.*)$": "<rootDir>/../src/$1",
+    "^@/modules/(.*)$": "<rootDir>/../src/modules/$1",
+    "^@/config/(.*)$": "<rootDir>/../src/config/$1",
+    "^@/common/(.*)$": "<rootDir>/../src/core/common/$1",
+    "^@/core/(.*)$": "<rootDir>/../src/core/$1"
+  },
+  "setupFilesAfterEnv": ["<rootDir>/setup.ts"],
+  "testTimeout": 60000,
+  "clearMocks": true,
+  "resetMocks": true,
+  "restoreMocks": true,
+  "verbose": true,
+  "globalSetup": "<rootDir>/global-setup.ts",
+  "globalTeardown": "<rootDir>/global-teardown.ts",
+  "forceExit": true,
+  "detectOpenHandles": true,
+  "preset": "ts-jest"
+}

@@ -13,15 +13,14 @@ import { EventsModule } from '../events/events.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([SensorData]),
-    DevicesModule,
+    forwardRef(() => DevicesModule),
     forwardRef(() => CalibrationsModule),
-    AlertsModule,
+    forwardRef(() => AlertsModule),
     forwardRef(() => ThresholdsModule),
-    EventsModule,
+    forwardRef(() => EventsModule),
   ],
   controllers: [SensorsController],
   providers: [SensorsService, SensorDataRepository],
   exports: [SensorsService, SensorDataRepository],
 })
-
 export class SensorsModule {}

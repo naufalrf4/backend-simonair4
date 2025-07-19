@@ -8,9 +8,9 @@ import { CacheModule } from '@nestjs/cache-manager';
 @Module({
   imports: [
     CacheModule.register(),
-    EventsModule,
+    forwardRef(() => EventsModule),
     forwardRef(() => SensorsModule),
-    DevicesModule,
+    forwardRef(() => DevicesModule),
   ],
   providers: [MqttService],
   exports: [MqttService],

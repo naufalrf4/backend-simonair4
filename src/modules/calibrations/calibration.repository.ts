@@ -11,7 +11,9 @@ export class CalibrationRepository {
     private readonly calibrationRepository: Repository<Calibration>,
   ) {}
 
-  create(createCalibrationDto: CreateCalibrationDto): Calibration {
+  create(
+    createCalibrationDto: CreateCalibrationDto | Partial<Calibration>,
+  ): Calibration {
     return this.calibrationRepository.create(createCalibrationDto);
   }
 
@@ -27,7 +29,10 @@ export class CalibrationRepository {
     return this.calibrationRepository.findOne(options);
   }
 
-  async update(id: string, updateData: Partial<Calibration>): Promise<Calibration> {
+  async update(
+    id: string,
+    updateData: Partial<Calibration>,
+  ): Promise<Calibration> {
     await this.calibrationRepository.update(id, updateData);
     const updated = await this.findOne({ where: { id } });
     if (!updated) {
@@ -40,7 +45,10 @@ export class CalibrationRepository {
     await this.calibrationRepository.delete(id);
   }
 
-  async findByDeviceId(deviceId: string, sensorType?: string): Promise<Calibration[]> {
+  async findByDeviceId(
+    deviceId: string,
+    sensorType?: string,
+  ): Promise<Calibration[]> {
     const where: any = { device_id: deviceId };
     if (sensorType) {
       where.sensor_type = sensorType;
@@ -51,10 +59,16 @@ export class CalibrationRepository {
   async clearBySensorType(deviceId: string, sensorType: string): Promise<any> {
     // This is a placeholder. The actual implementation will depend on how "cleared" is defined.
     // Assuming "cleared" means deleting the calibration records.
-    return this.calibrationRepository.delete({ device_id: deviceId, sensor_type: sensorType });
+    return this.calibrationRepository.delete({
+      device_id: deviceId,
+      sensor_type: sensorType,
+    });
   }
 
-  async getLatestByDeviceAndSensor(deviceId: string, sensorType: string): Promise<Calibration | null> {
+  async getLatestByDeviceAndSensor(
+    deviceId: string,
+    sensorType: string,
+  ): Promise<Calibration | null> {
     return this.findOne({
       where: {
         device_id: deviceId,
@@ -64,5 +78,32 @@ export class CalibrationRepository {
         applied_at: 'DESC',
       },
     });
+  }
+
+  /**
+   * Find calibrations by device ID with pagination support
+   * Used for calibration history retrieval
+   */
+  async findByDeviceIdWithPagination(
+    deviceId: string,
+    page: number = 1,
+    limit: number = 10,
+    sensorType?: string,
+  ): Promise<{ calibrations: Calibration[]; total: number }> {
+    const where: any = { device_id: deviceId };
+    if (sensorType) {
+      where.sensor_type = sensorType;
+    }
+
+    const [calibrations, total] = await this.calibrationRepository.findAndCount(
+      {
+        where,
+        order: { applied_at: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      },
+    );
+
+    return { calibrations, total };
   }
 }

@@ -1,5 +1,20 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { FishService } from './fish.service';
 import { CreateFishGrowthDto } from './dto/create-fish-growth.dto';
 import { UpdateFishGrowthDto } from './dto/update-fish-growth.dto';
@@ -19,7 +34,10 @@ export class FishController {
   @Post(':deviceId')
   @Roles(UserRole.USER, UserRole.ADMIN, UserRole.SUPERUSER)
   @ApiOperation({ summary: 'Record a new fish growth measurement' })
-  @ApiResponse({ status: 201, description: 'The record has been successfully created.' })
+  @ApiResponse({
+    status: 201,
+    description: 'The record has been successfully created.',
+  })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   create(
     @CurrentUser() user: User,
@@ -39,7 +57,12 @@ export class FishController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    return this.fishService.findAll(user, deviceId, startDate ? new Date(startDate) : undefined, endDate ? new Date(endDate) : undefined);
+    return this.fishService.findAll(
+      user,
+      deviceId,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined,
+    );
   }
 
   @Get('analytics/:deviceId')
@@ -61,7 +84,10 @@ export class FishController {
   @Put(':id')
   @Roles(UserRole.USER, UserRole.ADMIN, UserRole.SUPERUSER)
   @ApiOperation({ summary: 'Update a fish growth record' })
-  @ApiResponse({ status: 200, description: 'The record has been successfully updated.' })
+  @ApiResponse({
+    status: 200,
+    description: 'The record has been successfully updated.',
+  })
   update(
     @CurrentUser() user: User,
     @Param('id') id: string,
@@ -73,7 +99,10 @@ export class FishController {
   @Delete(':id')
   @Roles(UserRole.USER, UserRole.ADMIN, UserRole.SUPERUSER)
   @ApiOperation({ summary: 'Delete a fish growth record' })
-  @ApiResponse({ status: 204, description: 'The record has been successfully deleted.' })
+  @ApiResponse({
+    status: 204,
+    description: 'The record has been successfully deleted.',
+  })
   remove(@CurrentUser() user: User, @Param('id') id: string) {
     return this.fishService.remove(user, id);
   }

@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CreateEventDto } from '@/modules/events/dto/create-event.dto';
 import { EventQueryDto } from '@/modules/events/dto/event-query.dto';
@@ -17,7 +25,11 @@ export class EventsController {
   }
 
   @Get(':deviceId')
-  findByDeviceId(@Param('deviceId') deviceId: string, @Query() query: EventQueryDto, @CurrentUser() user: User) {
+  findByDeviceId(
+    @Param('deviceId') deviceId: string,
+    @Query() query: EventQueryDto,
+    @CurrentUser() user: User,
+  ) {
     return this.eventsService.findByDeviceId(deviceId, query, user);
   }
 }

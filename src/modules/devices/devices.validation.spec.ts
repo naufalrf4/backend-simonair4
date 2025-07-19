@@ -57,14 +57,14 @@ describe('DevicesService - Validation Enhancement', () => {
 
     it('should reject invalid device ID formats', async () => {
       const invalidFormats = [
-        'SMNR-123',     // Too short
-        'SMNR-12345',   // Too long
-        'SMNR-abc2',    // Lowercase letters
-        'SMNR-12@3',    // Special characters
-        'SMR-1234',     // Wrong prefix
-        'SMNR1234',     // Missing dash
-        '',             // Empty string
-        'SMNR-',        // Missing suffix
+        'SMNR-123', // Too short
+        'SMNR-12345', // Too long
+        'SMNR-abc2', // Lowercase letters
+        'SMNR-12@3', // Special characters
+        'SMR-1234', // Wrong prefix
+        'SMNR1234', // Missing dash
+        '', // Empty string
+        'SMNR-', // Missing suffix
       ];
 
       for (const invalidId of invalidFormats) {
@@ -73,7 +73,9 @@ describe('DevicesService - Validation Enhancement', () => {
           device_name: 'Test Device',
         };
 
-        await expect(service.create(dto, mockUser)).rejects.toThrow(BadRequestException);
+        await expect(service.create(dto, mockUser)).rejects.toThrow(
+          BadRequestException,
+        );
       }
     });
 
@@ -85,7 +87,9 @@ describe('DevicesService - Validation Enhancement', () => {
 
       mockRepository.checkExists.mockResolvedValue(true);
 
-      await expect(service.create(dto, mockUser)).rejects.toThrow(ConflictException);
+      await expect(service.create(dto, mockUser)).rejects.toThrow(
+        ConflictException,
+      );
       expect(mockRepository.checkExists).toHaveBeenCalledWith('SMNR-A1B2');
     });
   });
@@ -93,11 +97,13 @@ describe('DevicesService - Validation Enhancement', () => {
   describe('Device Name Validation', () => {
     it('should reject empty device names', async () => {
       const dto: CreateDeviceDto = {
-        device_id: 'SMNR-A1B2',
+        device_id: 'SMNR-E1T1',
         device_name: '',
       };
 
-      await expect(service.create(dto, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.create(dto, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should reject whitespace-only device names', async () => {
@@ -108,7 +114,9 @@ describe('DevicesService - Validation Enhancement', () => {
 
       mockRepository.checkExists.mockResolvedValue(false);
 
-      await expect(service.create(dto, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.create(dto, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should accept valid device names', async () => {
@@ -142,7 +150,9 @@ describe('DevicesService - Validation Enhancement', () => {
 
         mockRepository.checkExists.mockResolvedValue(false);
 
-        await expect(service.create(dto, mockUser)).rejects.toThrow(BadRequestException);
+        await expect(service.create(dto, mockUser)).rejects.toThrow(
+          BadRequestException,
+        );
       }
     });
 
@@ -172,7 +182,9 @@ describe('DevicesService - Validation Enhancement', () => {
 
       mockRepository.checkExists.mockResolvedValue(false);
 
-      await expect(service.create(dto, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.create(dto, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -196,7 +208,9 @@ describe('DevicesService - Validation Enhancement', () => {
 
       mockRepository.save.mockResolvedValue({ ...mockDevice, ...updateDto });
 
-      await expect(service.update('device-123', updateDto, mockUser)).resolves.toBeDefined();
+      await expect(
+        service.update('device-123', updateDto, mockUser),
+      ).resolves.toBeDefined();
     });
 
     it('should reject whitespace-only updates', async () => {
@@ -208,25 +222,28 @@ describe('DevicesService - Validation Enhancement', () => {
       ];
 
       for (const testCase of testCases) {
-        await expect(service.update('device-123', testCase, mockUser)).rejects.toThrow(BadRequestException);
+        await expect(
+          service.update('device-123', testCase, mockUser),
+        ).rejects.toThrow(BadRequestException);
       }
     });
 
     it('should validate fish count in updates', async () => {
-      const invalidUpdates = [
-        { fish_count: -1 },
-        { fish_count: 15000 },
-      ];
+      const invalidUpdates = [{ fish_count: -1 }, { fish_count: 15000 }];
 
       for (const update of invalidUpdates) {
-        await expect(service.update('device-123', update, mockUser)).rejects.toThrow(BadRequestException);
+        await expect(
+          service.update('device-123', update, mockUser),
+        ).rejects.toThrow(BadRequestException);
       }
     });
 
     it('should validate is_active field type', async () => {
       const invalidUpdate = { is_active: 'true' as any }; // String instead of boolean
 
-      await expect(service.update('device-123', invalidUpdate, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update('device-123', invalidUpdate, mockUser),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -237,9 +254,13 @@ describe('DevicesService - Validation Enhancement', () => {
         device_name: 'Test Device',
       };
 
-      mockRepository.checkExists.mockRejectedValue(new Error('Database connection failed'));
+      mockRepository.checkExists.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
 
-      await expect(service.create(dto, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.create(dto, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should provide detailed error messages for duplicate registration', async () => {

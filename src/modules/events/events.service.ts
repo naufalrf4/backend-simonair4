@@ -15,11 +15,19 @@ export class EventsService {
     private readonly devicesService: DevicesService,
   ) {}
 
-  async create(createEventDto: CreateEventDto, user?: User): Promise<WaterQualityEvent> {
+  async create(
+    createEventDto: CreateEventDto,
+    user?: User,
+  ): Promise<WaterQualityEvent> {
     if (user) {
-      const device = await this.devicesService.findOne(createEventDto.device_id, user);
+      const device = await this.devicesService.findOne(
+        createEventDto.device_id,
+        user,
+      );
       if (!device) {
-        throw new UnauthorizedException('You are not authorized to create an event for this device.');
+        throw new UnauthorizedException(
+          'You are not authorized to create an event for this device.',
+        );
       }
     }
 
@@ -30,10 +38,16 @@ export class EventsService {
     return this.eventRepository.save(event);
   }
 
-  async findByDeviceId(deviceId: string, query: EventQueryDto, user: User): Promise<WaterQualityEvent[]> {
+  async findByDeviceId(
+    deviceId: string,
+    query: EventQueryDto,
+    user: User,
+  ): Promise<WaterQualityEvent[]> {
     const device = await this.devicesService.findOne(deviceId, user);
     if (!device) {
-      throw new UnauthorizedException('You are not authorized to view events for this device.');
+      throw new UnauthorizedException(
+        'You are not authorized to view events for this device.',
+      );
     }
     const { event_type, start_date, end_date } = query;
     const where: any = { device_id: deviceId };

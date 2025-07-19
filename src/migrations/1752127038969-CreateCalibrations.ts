@@ -24,7 +24,9 @@ export class CreateCalibrations1752127038969 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "IDX_calibrations_device_id_sensor_type_applied_at"`);
+    await queryRunner.query(
+      `DROP INDEX "IDX_calibrations_device_id_sensor_type_applied_at"`,
+    );
     await queryRunner.query(`DROP TABLE "calibrations"`);
   }
 }

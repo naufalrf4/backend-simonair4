@@ -18,7 +18,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
 
   async validate(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmail(email, true);
-    
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -27,14 +27,23 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
       throw new UnauthorizedException('Account is deactivated');
     }
 
-    const isPasswordValid = await this.usersService.validatePassword(user, password);
-    
+    const isPasswordValid = await this.usersService.validatePassword(
+      user,
+      password,
+    );
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // Remove sensitive data
-    const { password_hash, reset_token, reset_token_expires, verification_token, ...result } = user;
+    const {
+      password_hash,
+      reset_token,
+      reset_token_expires,
+      verification_token,
+      ...result
+    } = user;
     return result;
   }
 }

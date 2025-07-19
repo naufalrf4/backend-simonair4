@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class TimescaleDBSetup1752127868536 implements MigrationInterface {
   public transaction = false;
-  
+
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE EXTENSION IF NOT EXISTS timescaledb;
@@ -25,7 +25,9 @@ export class TimescaleDBSetup1752127868536 implements MigrationInterface {
       ON sensor_data (device_id, time DESC);
     `);
 
-    await queryRunner.query(`DROP MATERIALIZED VIEW IF EXISTS sensor_data_hourly;`);
+    await queryRunner.query(
+      `DROP MATERIALIZED VIEW IF EXISTS sensor_data_hourly;`,
+    );
     await queryRunner.query(`
       CREATE MATERIALIZED VIEW sensor_data_hourly
       WITH (timescaledb.continuous) AS

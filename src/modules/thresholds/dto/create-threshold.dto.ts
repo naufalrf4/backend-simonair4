@@ -1,4 +1,9 @@
-import { IsNumber, IsNotEmpty, IsObject, ValidateNested } from 'class-validator';
+import {
+  IsNumber,
+  IsNotEmpty,
+  IsObject,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class ThresholdDataDto {

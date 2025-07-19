@@ -5,7 +5,13 @@ import { AuthGuard } from '@nestjs/passport';
 export class GoogleAuthGuard extends AuthGuard('google') {
   handleRequest(err, user, info, context: ExecutionContext) {
     if (err || !user) {
-      throw err || new Error(info?.message || 'An unknown error occurred during Google authentication.');
+      throw (
+        err ||
+        new Error(
+          info?.message ||
+            'An unknown error occurred during Google authentication.',
+        )
+      );
     }
     return user;
   }

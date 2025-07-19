@@ -34,8 +34,10 @@ export class DevicesRepository extends Repository<Device> {
     const { user, page = 1, limit = 10, search } = options;
 
     // First get the devices with count
-    const baseQuery = this.createQueryBuilder('device')
-      .leftJoinAndSelect('device.user', 'user');
+    const baseQuery = this.createQueryBuilder('device').leftJoinAndSelect(
+      'device.user',
+      'user',
+    );
 
     if (user.role === UserRole.USER) {
       baseQuery.where('device.user_id = :userId', { userId: user.id });
@@ -61,7 +63,9 @@ export class DevicesRepository extends Repository<Device> {
           .createQueryBuilder()
           .select('sensor_data.*')
           .from('sensor_data', 'sensor_data')
-          .where('sensor_data.device_id = :deviceId', { deviceId: device.device_id })
+          .where('sensor_data.device_id = :deviceId', {
+            deviceId: device.device_id,
+          })
           .orderBy('sensor_data.time', 'DESC')
           .limit(1)
           .getRawOne();

@@ -15,7 +15,10 @@ export class AckService {
     private readonly ackGateway: AckGateway,
   ) {}
 
-  async publishThresholdWithAck(deviceId: string, thresholdData: any): Promise<void> {
+  async publishThresholdWithAck(
+    deviceId: string,
+    thresholdData: any,
+  ): Promise<void> {
     const topic = `simonair/${deviceId}/offset`;
     const ackTopic = `${topic}/ack`;
     const payload = JSON.stringify(thresholdData);
@@ -28,7 +31,11 @@ export class AckService {
       const message = JSON.parse(payload.toString());
       const status = message.status === 'success' ? 'success' : 'failed';
       await this.thresholdsService.updateAckStatus(deviceId, status);
-      this.ackGateway.broadcastThresholdAck(deviceId, status, `Thresholds updated ${status}`);
+      this.ackGateway.broadcastThresholdAck(
+        deviceId,
+        status,
+        `Thresholds updated ${status}`,
+      );
     };
 
     this.mqttService.subscribe(ackTopic, ackCallback);
@@ -37,7 +44,11 @@ export class AckService {
     timeoutId = setTimeout(async () => {
       this.mqttService.unsubscribe(ackTopic);
       await this.thresholdsService.updateAckStatus(deviceId, 'failed');
-      this.ackGateway.broadcastThresholdAck(deviceId, 'failed', 'Timeout: No response from device');
+      this.ackGateway.broadcastThresholdAck(
+        deviceId,
+        'failed',
+        'Timeout: No response from device',
+      );
     }, 30000); // 30-second timeout
   }
 }

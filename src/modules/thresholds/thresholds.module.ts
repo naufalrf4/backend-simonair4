@@ -12,12 +12,18 @@ import { AckModule } from '../ack/ack.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Threshold]),
-    DevicesModule,
+    // Import DevicesModule for device validation and ownership checks
+    forwardRef(() => DevicesModule),
+    // Import MqttModule for MQTT publishing functionality (forwardRef to avoid circular dependency)
+    forwardRef(() => MqttModule),
+    // Import AckModule for ACK handling (forwardRef to avoid circular dependency)
     forwardRef(() => AckModule),
+    // Import SensorsModule for sensor data processing (forwardRef to avoid circular dependency)
     forwardRef(() => SensorsModule),
   ],
   controllers: [ThresholdsController],
   providers: [ThresholdsService, ThresholdsRepository],
-  exports: [ThresholdsService],
+  // Export service and repository for cross-module usage
+  exports: [ThresholdsService, ThresholdsRepository],
 })
 export class ThresholdsModule {}

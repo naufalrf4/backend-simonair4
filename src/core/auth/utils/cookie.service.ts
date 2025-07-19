@@ -8,7 +8,7 @@ export class CookieService {
 
   setRefreshToken(res: Response, token: string) {
     const expiresIn = new Date();
-    expiresIn.setDate(expiresIn.getDate() + 7); 
+    expiresIn.setDate(expiresIn.getDate() + 7);
 
     res.cookie('refresh_token', token, {
       httpOnly: true,

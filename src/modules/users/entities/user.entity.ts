@@ -9,9 +9,10 @@ import {
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 // Forward reference to avoid circular imports
-import { Calibration } from '@/modules/calibrations/entities/calibration.entity';
-import { WaterQualityEvent } from '@/modules/events/entities/water-quality-event.entity';
-import { Threshold } from '@/modules/thresholds/entities/threshold.entity';
+import { Calibration } from '../../calibrations/entities/calibration.entity';
+import { WaterQualityEvent } from '../../events/entities/water-quality-event.entity';
+import { Threshold } from '../../thresholds/entities/threshold.entity';
+import { ManualMeasurement } from '../../manual-measurements/entities/manual-measurement.entity';
 
 export enum UserRole {
   SUPERUSER = 'superuser',
@@ -81,6 +82,9 @@ export class User {
 
   @OneToMany(() => WaterQualityEvent, (event) => event.created_by_user)
   water_quality_events: WaterQualityEvent[];
+
+  @OneToMany(() => ManualMeasurement, (manualMeasurement) => manualMeasurement.user)
+  manual_measurements: ManualMeasurement[];
 
   @OneToMany(() => Threshold, (threshold) => threshold.updatedByUser)
   updatedThresholds: Threshold[];

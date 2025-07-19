@@ -32,12 +32,7 @@ export class ExportController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
     const { file, fileName, contentType } =
-      await this.exportService.generateExport(
-        type,
-        deviceId,
-        user,
-        query,
-      );
+      await this.exportService.generateExport(type, deviceId, user, query);
 
     res.set({
       'Content-Type': contentType,

@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 import { Device } from '../../devices/entities/device.entity';
 
 @Entity('fish_growth')
@@ -32,7 +40,7 @@ export class FishGrowth {
   created_at: Date;
 
   // Relations
-  @ManyToOne(() => Device, device => device.fish_growth)
+  @ManyToOne(() => Device, (device) => device.fish_growth)
   @JoinColumn({ name: 'device_id', referencedColumnName: 'device_id' })
   device: Device;
 }

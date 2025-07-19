@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsDate, IsOptional, IsIn } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDate,
+  IsOptional,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 const validEventTypes = ['water_change', 'mortality', 'feeding'];

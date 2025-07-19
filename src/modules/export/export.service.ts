@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SensorsService } from '@/modules/sensors/sensors.service';
 import { FishService } from '@/modules/fish/fish.service';
 import { FeedService } from '@/modules/feed/feed.service';

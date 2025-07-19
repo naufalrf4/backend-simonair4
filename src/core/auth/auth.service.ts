@@ -3,7 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common';
 import { TooManyRequestsException } from './exceptions/too-many-requests.exception';
 import { JwtService } from '@nestjs/jwt';
@@ -20,21 +20,21 @@ import { User, UserRole } from '@/modules/users/entities/user.entity';
 import { CookieService } from './utils/cookie.service';
 import { LoginAttempt } from './entities/login-attempt.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
-import { 
-  LoginRequestDto, 
-  RegisterRequestDto, 
-  ForgotPasswordRequestDto, 
+import {
+  LoginRequestDto,
+  RegisterRequestDto,
+  ForgotPasswordRequestDto,
   ResetPasswordRequestDto,
   ValidateResetTokenRequestDto,
-  GoogleAuthRequestDto
+  GoogleAuthRequestDto,
 } from './dto/auth-request.dto';
-import { 
-  UserResponseData, 
-  AuthResponseData, 
-  TokenResponseData, 
+import {
+  UserResponseData,
+  AuthResponseData,
+  TokenResponseData,
   MessageResponseData,
   GoogleAuthUrlData,
-  ResetTokenStatusData
+  ResetTokenStatusData,
 } from './dto/auth-response.dto';
 
 @Injectable()
@@ -77,11 +77,14 @@ export class AuthService {
   /**
    * Generate access and refresh tokens
    */
-  private async generateTokens(user: User, req: Request): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { 
-      email: user.email, 
-      sub: user.id, 
-      role: user.role 
+  private async generateTokens(
+    user: User,
+    req: Request,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -99,7 +102,8 @@ export class AuthService {
     const refreshTokenEntity = this.refreshTokenRepository.create({
       token: hashedRefreshToken,
       user_id: user.id,
-      ip_address: req.ip || req.headers['x-forwarded-for']?.toString() || 'unknown',
+      ip_address:
+        req.ip || req.headers['x-forwarded-for']?.toString() || 'unknown',
       user_agent: req.headers['user-agent'] || 'unknown',
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     });
@@ -112,25 +116,32 @@ export class AuthService {
   /**
    * Check if IP/email is rate limited for login attempts
    */
-  private async checkLoginRateLimit(email: string, ipAddress: string): Promise<void> {
+  private async checkLoginRateLimit(
+    email: string,
+    ipAddress: string,
+  ): Promise<void> {
     const recentAttempts = await this.loginAttemptRepository.count({
       where: [
         {
           email,
           success: false,
-          created_at: MoreThan(new Date(Date.now() - this.LOGIN_ATTEMPT_WINDOW)),
+          created_at: MoreThan(
+            new Date(Date.now() - this.LOGIN_ATTEMPT_WINDOW),
+          ),
         },
         {
           ip_address: ipAddress,
           success: false,
-          created_at: MoreThan(new Date(Date.now() - this.LOGIN_ATTEMPT_WINDOW)),
+          created_at: MoreThan(
+            new Date(Date.now() - this.LOGIN_ATTEMPT_WINDOW),
+          ),
         },
       ],
     });
 
     if (recentAttempts >= this.MAX_LOGIN_ATTEMPTS) {
       throw new TooManyRequestsException(
-        'Too many failed login attempts. Please try again later.'
+        'Too many failed login attempts. Please try again later.',
       );
     }
   }
@@ -139,10 +150,10 @@ export class AuthService {
    * Record login attempt
    */
   private async recordLoginAttempt(
-    email: string, 
-    ipAddress: string, 
-    userAgent: string, 
-    success: boolean
+    email: string,
+    ipAddress: string,
+    userAgent: string,
+    success: boolean,
   ): Promise<void> {
     const attempt = this.loginAttemptRepository.create({
       email,
@@ -157,8 +168,13 @@ export class AuthService {
   /**
    * User login
    */
-  async login(loginDto: LoginRequestDto, req: Request, res: Response): Promise<AuthResponseData> {
-    const ipAddress = req.ip || req.headers['x-forwarded-for']?.toString() || 'unknown';
+  async login(
+    loginDto: LoginRequestDto,
+    req: Request,
+    res: Response,
+  ): Promise<AuthResponseData> {
+    const ipAddress =
+      req.ip || req.headers['x-forwarded-for']?.toString() || 'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     // Check rate limit
@@ -166,16 +182,29 @@ export class AuthService {
 
     // Validate user credentials
     const user = await this.usersService.findByEmail(loginDto.email, true);
-    
-    if (!user || !await this.usersService.validatePassword(user, loginDto.password)) {
+
+    if (
+      !user ||
+      !(await this.usersService.validatePassword(user, loginDto.password))
+    ) {
       // Record failed attempt
-      await this.recordLoginAttempt(loginDto.email, ipAddress, userAgent, false);
+      await this.recordLoginAttempt(
+        loginDto.email,
+        ipAddress,
+        userAgent,
+        false,
+      );
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // Check if user is active
     if (!user.is_active) {
-      await this.recordLoginAttempt(loginDto.email, ipAddress, userAgent, false);
+      await this.recordLoginAttempt(
+        loginDto.email,
+        ipAddress,
+        userAgent,
+        false,
+      );
       throw new UnauthorizedException('Account is deactivated');
     }
 
@@ -203,8 +232,13 @@ export class AuthService {
   /**
    * User registration
    */
-  async register(registerDto: RegisterRequestDto, req: Request, res: Response): Promise<AuthResponseData> {
-    const ipAddress = req.ip || req.headers['x-forwarded-for']?.toString() || 'unknown';
+  async register(
+    registerDto: RegisterRequestDto,
+    req: Request,
+    res: Response,
+  ): Promise<AuthResponseData> {
+    const ipAddress =
+      req.ip || req.headers['x-forwarded-for']?.toString() || 'unknown';
 
     // Check if email already exists
     const existingUser = await this.usersService.findByEmail(registerDto.email);
@@ -222,7 +256,7 @@ export class AuthService {
 
     if (recentRegistrations >= 3) {
       throw new TooManyRequestsException(
-        'Too many registration attempts from this IP. Please try again later.'
+        'Too many registration attempts from this IP. Please try again later.',
       );
     }
 
@@ -252,7 +286,11 @@ export class AuthService {
   /**
    * Refresh access token
    */
-  async refreshToken(refreshTokenValue: string, req: Request, res: Response): Promise<TokenResponseData> {
+  async refreshToken(
+    refreshTokenValue: string,
+    req: Request,
+    res: Response,
+  ): Promise<TokenResponseData> {
     if (!refreshTokenValue) {
       throw new UnauthorizedException('Refresh token is required');
     }
@@ -289,7 +327,8 @@ export class AuthService {
     await this.refreshTokenRepository.save(refreshToken);
 
     // Generate new tokens
-    const { accessToken, refreshToken: newRefreshToken } = await this.generateTokens(refreshToken.user, req);
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.generateTokens(refreshToken.user, req);
 
     // Set new refresh token in cookie
     this.cookieService.setRefreshToken(res, newRefreshToken);
@@ -300,7 +339,10 @@ export class AuthService {
   /**
    * User logout
    */
-  async logout(refreshTokenValue: string, res: Response): Promise<MessageResponseData> {
+  async logout(
+    refreshTokenValue: string,
+    res: Response,
+  ): Promise<MessageResponseData> {
     if (refreshTokenValue) {
       // Hash the token
       const hashedToken = crypto
@@ -311,11 +353,11 @@ export class AuthService {
       // Invalidate refresh token in database
       await this.refreshTokenRepository.update(
         { token: hashedToken },
-        { 
-          is_valid: false, 
+        {
+          is_valid: false,
           revoked_at: new Date(),
-          revoked_reason: 'User logout'
-        }
+          revoked_reason: 'User logout',
+        },
       );
     }
 
@@ -330,7 +372,7 @@ export class AuthService {
    */
   getGoogleLoginUrl(googleAuthDto?: GoogleAuthRequestDto): GoogleAuthUrlData {
     const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
-    
+
     // Generate PKCE challenge
     const codeVerifier = crypto.randomBytes(32).toString('base64url');
     const codeChallenge = crypto
@@ -342,7 +384,9 @@ export class AuthService {
     const state = crypto.randomBytes(16).toString('hex');
 
     const options = {
-      redirect_uri: googleAuthDto?.redirectUri || this.configService.get<string>('GOOGLE_REDIRECT_URI', ''),
+      redirect_uri:
+        googleAuthDto?.redirectUri ||
+        this.configService.get<string>('GOOGLE_REDIRECT_URI', ''),
       client_id: this.configService.get<string>('GOOGLE_CLIENT_ID', ''),
       access_type: 'offline',
       response_type: 'code',
@@ -366,15 +410,24 @@ export class AuthService {
   /**
    * Login with Google
    */
-  async loginWithGoogle(googleUser: any, req: Request, res: Response): Promise<AuthResponseData> {
-    let user = await this.usersService.findBySocialId('google', googleUser.social_id);
+  async loginWithGoogle(
+    googleUser: any,
+    req: Request,
+    res: Response,
+  ): Promise<AuthResponseData> {
+    let user = await this.usersService.findBySocialId(
+      'google',
+      googleUser.social_id,
+    );
 
     if (!user) {
       // Check if email already exists
-      const existingUser = await this.usersService.findByEmail(googleUser.email);
+      const existingUser = await this.usersService.findByEmail(
+        googleUser.email,
+      );
       if (existingUser) {
         throw new ConflictException(
-          'An account with this email already exists. Please log in with your original method.'
+          'An account with this email already exists. Please log in with your original method.',
         );
       }
 
@@ -418,8 +471,12 @@ export class AuthService {
   /**
    * Request password reset
    */
-  async forgotPassword(forgotPasswordDto: ForgotPasswordRequestDto, req: Request): Promise<MessageResponseData> {
-    const ipAddress = req.ip || req.headers['x-forwarded-for']?.toString() || 'unknown';
+  async forgotPassword(
+    forgotPasswordDto: ForgotPasswordRequestDto,
+    req: Request,
+  ): Promise<MessageResponseData> {
+    const ipAddress =
+      req.ip || req.headers['x-forwarded-for']?.toString() || 'unknown';
 
     // Rate limit check
     const recentRequests = await this.loginAttemptRepository.count({
@@ -431,34 +488,52 @@ export class AuthService {
 
     if (recentRequests >= 3) {
       throw new TooManyRequestsException(
-        'Too many password reset requests. Please try again later.'
+        'Too many password reset requests. Please try again later.',
       );
     }
 
     try {
-      const resetToken = await this.usersService.generateResetToken(forgotPasswordDto.email);
-      
+      const resetToken = await this.usersService.generateResetToken(
+        forgotPasswordDto.email,
+      );
+
       // Send email with reset link
       const resetLink = `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token=${resetToken}`;
-      await this.emailService.sendPasswordResetEmail(forgotPasswordDto.email, resetLink);
+      await this.emailService.sendPasswordResetEmail(
+        forgotPasswordDto.email,
+        resetLink,
+      );
 
       // Record the request
-      await this.recordLoginAttempt(forgotPasswordDto.email, ipAddress, req.headers['user-agent'] || 'unknown', true);
+      await this.recordLoginAttempt(
+        forgotPasswordDto.email,
+        ipAddress,
+        req.headers['user-agent'] || 'unknown',
+        true,
+      );
     } catch (error) {
       // Don't reveal if email exists or not
     }
 
     // Always return success message for security
-    return { message: 'If the email exists, a password reset link has been sent.' };
+    return {
+      message: 'If the email exists, a password reset link has been sent.',
+    };
   }
 
   /**
    * Validate reset token
    */
-  async validateResetToken(validateDto: ValidateResetTokenRequestDto): Promise<ResetTokenStatusData> {
+  async validateResetToken(
+    validateDto: ValidateResetTokenRequestDto,
+  ): Promise<ResetTokenStatusData> {
     const user = await this.usersService.findByResetToken(validateDto.token);
 
-    if (!user || !user.reset_token_expires || user.reset_token_expires < new Date()) {
+    if (
+      !user ||
+      !user.reset_token_expires ||
+      user.reset_token_expires < new Date()
+    ) {
       return {
         valid: false,
         message: 'Invalid or expired token',
@@ -474,17 +549,24 @@ export class AuthService {
   /**
    * Reset password
    */
-  async resetPassword(resetPasswordDto: ResetPasswordRequestDto): Promise<MessageResponseData> {
+  async resetPassword(
+    resetPasswordDto: ResetPasswordRequestDto,
+  ): Promise<MessageResponseData> {
     if (resetPasswordDto.password !== resetPasswordDto.confirmPassword) {
       throw new BadRequestException('Passwords do not match');
     }
 
     try {
       // Get user email before resetting password
-      const user = await this.usersService.findByResetToken(resetPasswordDto.token);
-      
-      await this.usersService.resetPassword(resetPasswordDto.token, resetPasswordDto.password);
-      
+      const user = await this.usersService.findByResetToken(
+        resetPasswordDto.token,
+      );
+
+      await this.usersService.resetPassword(
+        resetPasswordDto.token,
+        resetPasswordDto.password,
+      );
+
       // Send confirmation email
       if (user) {
         await this.emailService.sendPasswordChangedEmail(user.email);

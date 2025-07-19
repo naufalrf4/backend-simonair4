@@ -1,10 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WaterQualityEvent } from './entities/water-quality-event.entity';
 import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
 import { EventsGateway } from './events.gateway';
-import { AuthModule } from '@/core/auth/auth.module';
+import { AuthModule } from '../../core/auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { DevicesModule } from '../devices/devices.module';
 
@@ -13,7 +13,7 @@ import { DevicesModule } from '../devices/devices.module';
     TypeOrmModule.forFeature([WaterQualityEvent]),
     AuthModule,
     UsersModule,
-    DevicesModule,
+    forwardRef(() => DevicesModule),
   ],
   controllers: [EventsController],
   providers: [EventsService, EventsGateway],
