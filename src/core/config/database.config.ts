@@ -15,9 +15,6 @@ export default registerAs(
     autoLoadEntities: true,
     retryAttempts: 3,
     retryDelay: 3000,
-    ssl:
-      process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }
-        : false,
+    ssl: false
   }),
 );
