@@ -38,23 +38,29 @@ export class SensorsService {
     const cleanedData = { ...data };
     delete cleanedData.do; // Remove do field if it exists
 
-    const calibratedData = await this.applyCalibration(
-      deviceId,
-      cleanedData,
-    );
-    const threshold = await this.getDeviceThreshold(deviceId);
-    const processedData = this.calculateStatus(calibratedData, threshold);
-
+    // Device already provides calibrated data, status, and thresholds validation
+    // Backend only needs to save and broadcast the received data
     const savedData = await this.sensorDataRepository.createSensorData({
-      ...processedData,
+      ...cleanedData,
       device_id: deviceId,
       time: data.timestamp ? new Date(data.timestamp) : new Date(),
+      mqtt_published_at: new Date(),
     });
 
+    // Only evaluate alerts if we still want backend alert processing
     await this.alertsService.evaluateThresholds(savedData);
 
-    this.eventsGateway.broadcast(deviceId, savedData);
-    this.logger.log(`Processed and saved sensor data for device ${deviceId}`);
+    // Broadcast the data as received from device
+    this.eventsGateway.broadcast(deviceId, {
+      ...savedData,
+      source: 'device'
+    });
+    
+    this.logger.log(`Received and saved sensor data for device ${deviceId}`, {
+      deviceId,
+      timestamp: savedData.time
+    });
+    
     return savedData;
   }
 
@@ -62,55 +68,9 @@ export class SensorsService {
     deviceId: string,
     data: Partial<SensorData>,
   ): Promise<Partial<SensorData>> {
-    const calibrations = await this.calibrationsService.findAll(deviceId);
-    if (calibrations.length === 0) {
-      this.logger.warn(
-        `No calibrations found for device ${deviceId}. Using raw values.`,
-      );
-      return data;
-    }
-
-    const calibratedData = JSON.parse(JSON.stringify(data)); // Deep copy
-
-    for (const sensorType of ['ph', 'tds', 'do_level']) {
-      if (
-        calibratedData[sensorType] &&
-        calibratedData[sensorType].raw !== undefined
-      ) {
-        // Check if device already provided calibrated values
-        const deviceHasCalibratedValue = calibratedData[sensorType].calibrated !== undefined;
-        const deviceHasCalibratedOk = calibratedData[sensorType].calibrated_ok !== undefined;
-        
-        // If device already provided calibrated values, use them
-        if (deviceHasCalibratedValue) {
-          // Device has already provided calibrated values, preserve them
-          this.logger.debug(
-            `Device ${deviceId} provided calibrated value for ${sensorType}: ${calibratedData[sensorType].calibrated}`,
-          );
-          // Keep the device's calibrated value and calibrated_ok status
-          continue;
-        }
-        
-        // Otherwise, apply backend calibration
-        const calibration = this.findLatestCalibration(
-          calibrations,
-          sensorType === 'do_level' ? 'do' : sensorType,
-        );
-        if (calibration && calibration.calibration_data) {
-          const { m, c } = calibration.calibration_data;
-          if (typeof m === 'number' && typeof c === 'number') {
-            calibratedData[sensorType].calibrated =
-              calibratedData[sensorType].raw * m + c;
-            calibratedData[sensorType].calibrated_ok = true;
-          } else {
-            calibratedData[sensorType].calibrated_ok = false;
-          }
-        } else {
-          calibratedData[sensorType].calibrated_ok = false;
-        }
-      }
-    }
-    return calibratedData;
+    // Device already provides calibrated data, no backend calibration needed
+    this.logger.debug(`Device ${deviceId} already provides calibrated data, skipping backend calibration`);
+    return data;
   }
 
   private async getDeviceThreshold(
@@ -134,65 +94,9 @@ export class SensorsService {
     data: Partial<SensorData>,
     threshold: Threshold | null,
   ): Partial<SensorData> {
-    const processedData = { ...data };
-    const defaultThresholds = {
-      temperature: { temp_low: 25, temp_high: 30 },
-      ph: { ph_good: 6.5, ph_bad: 7.5 },
-      tds: { tds_good: 100, tds_bad: 500 },
-      do_level: { do_good: 5, do_bad: 8 },
-    };
-
-    const deviceThresholds = threshold ? threshold.thresholdData.threshold : {};
-
-    const getThresholdsFor = (sensorType: string) => {
-      switch (sensorType) {
-        case 'temperature':
-          return {
-            min:
-              deviceThresholds.temp_low ??
-              defaultThresholds.temperature.temp_low,
-            max:
-              deviceThresholds.temp_high ??
-              defaultThresholds.temperature.temp_high,
-          };
-        case 'ph':
-          return {
-            min: deviceThresholds.ph_good ?? defaultThresholds.ph.ph_good,
-            max: deviceThresholds.ph_bad ?? defaultThresholds.ph.ph_bad,
-          };
-        case 'tds':
-          return {
-            min: deviceThresholds.tds_good ?? defaultThresholds.tds.tds_good,
-            max: deviceThresholds.tds_bad ?? defaultThresholds.tds.tds_bad,
-          };
-        case 'do_level':
-          return {
-            min: deviceThresholds.do_good ?? defaultThresholds.do_level.do_good,
-            max: deviceThresholds.do_bad ?? defaultThresholds.do_level.do_bad,
-          };
-        default:
-          return null;
-      }
-    };
-
-    for (const sensorType of ['temperature', 'ph', 'tds', 'do_level']) {
-      if (processedData[sensorType]) {
-        const thresholds = getThresholdsFor(sensorType);
-        if (thresholds) {
-          const value =
-            processedData[sensorType].calibrated ??
-            processedData[sensorType].value ??
-            processedData[sensorType].raw;
-          if (value !== undefined) {
-            processedData[sensorType].status =
-              value >= thresholds.min && value <= thresholds.max
-                ? 'GOOD'
-                : 'BAD';
-          }
-        }
-      }
-    }
-    return processedData;
+    // Device already provides status information, no backend calculation needed
+    this.logger.debug(`Device already provides status data, skipping backend status calculation`);
+    return data;
   }
 
   private findLatestCalibration(

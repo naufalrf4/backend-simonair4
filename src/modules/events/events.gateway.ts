@@ -97,7 +97,59 @@ export class EventsGateway
   broadcast(deviceId: string, data: any) {
     const room = `device:${deviceId}`;
     this.server.to(room).emit('sensorUpdate', data);
-    this.logger.log(`Broadcasted sensor update to room ${room}`);
+    this.logger.log(`Broadcasted sensor update to room ${room}`, {
+      deviceId,
+      dataKeys: Object.keys(data),
+      timestamp: data.timestamp || data.time,
+      isRealtime: data.realtime || false,
+      source: data.source || 'database'
+    });
+  }
+
+  // Enhanced broadcast method for real-time MQTT data
+  broadcastRealtime(deviceId: string, data: any) {
+    const room = `device:${deviceId}`;
+    const realtimeData = {
+      ...data,
+      realtime: true,
+      source: 'mqtt',
+      timestamp: new Date().toISOString()
+    };
+    
+    this.server.to(room).emit('realtimeSensorUpdate', realtimeData);
+    this.logger.log(`Broadcasted real-time sensor update to room ${room}`, {
+      deviceId,
+      dataKeys: Object.keys(data),
+    });
+  }
+
+  // Broadcast sensor status changes
+  broadcastStatus(deviceId: string, status: any) {
+    const room = `device:${deviceId}`;
+    this.server.to(room).emit('deviceStatus', {
+      deviceId,
+      status,
+      timestamp: new Date().toISOString()
+    });
+    this.logger.log(`Broadcasted device status to room ${room}`, {
+      deviceId,
+      status
+    });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('join_device_room')
+  handleJoinDeviceRoom(client: Socket, payload: { deviceId: string }) {
+    const room = `device:${payload.deviceId}`;
+    client.join(room);
+    this.logger.log(`Client ${client.id} joined device room: ${room}`);
+    
+    // Send confirmation
+    client.emit('roomJoined', {
+      room,
+      deviceId: payload.deviceId,
+      timestamp: new Date().toISOString()
+    });
   }
 
   @UseGuards(WsJwtGuard)

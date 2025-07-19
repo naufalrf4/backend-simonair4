@@ -447,6 +447,10 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.devicesService.updateLastSeen(deviceId);
 
+      // Forward raw validated data to WebSocket immediately for real-time updates
+      this.eventsGateway.broadcastRealtime(deviceId, validatedData);
+
+      // Process and save data to database
       await this.sensorsService.processAndSaveData(deviceId, validatedData);
 
       await this.cacheManager.set(`last_message_${deviceId}`, now, 10);
@@ -761,6 +765,7 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
    * Process sensor reading with status field and return structured data
    * Implements requirement 4.7 - compatible with SensorData entity structure
    * Updated to handle new IoT device format: {"value": number, "status": string} or {"raw": number, "voltage": number, "calibrated": number, "calibrated_ok": boolean, "status": string}
+   * Device already provides calibrated data, so we preserve all device-provided values
    */
   private processSensorReadingWithStatus(
     rawData: any,
@@ -771,66 +776,47 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
     if (rawData[valueField] && typeof rawData[valueField] === 'object') {
       const sensorData = rawData[valueField];
 
-      // Get the sensor value - prefer 'value' if available, otherwise use 'calibrated' or 'raw'
-      let sensorValue: number | undefined;
+      // Device provides complete sensor data, preserve all fields as-is
+      const sensorReading: any = {};
+
+      // Copy all fields from device data
+      if (sensorData.raw !== undefined) {
+        sensorReading.raw = parseFloat(sensorData.raw);
+      }
+      
       if (sensorData.value !== undefined) {
-        sensorValue = parseFloat(sensorData.value);
-      } else if (sensorData.calibrated !== undefined) {
-        sensorValue = parseFloat(sensorData.calibrated);
-      } else if (sensorData.raw !== undefined) {
-        sensorValue = parseFloat(sensorData.raw);
+        sensorReading.value = parseFloat(sensorData.value);
+      }
+      
+      if (sensorData.voltage !== undefined) {
+        sensorReading.voltage = parseFloat(sensorData.voltage);
+      }
+      
+      if (sensorData.calibrated !== undefined) {
+        sensorReading.calibrated = parseFloat(sensorData.calibrated);
+      }
+      
+      if (sensorData.calibrated_ok !== undefined) {
+        sensorReading.calibrated_ok = Boolean(sensorData.calibrated_ok);
+      }
+      
+      if (sensorData.status !== undefined) {
+        const status = sensorData.status.toString().toUpperCase();
+        if (status === 'GOOD' || status === 'BAD') {
+          sensorReading.status = status;
+        }
       }
 
-      if (sensorValue !== undefined && !isNaN(sensorValue)) {
-        const sensorReading: any = {
-          raw:
-            sensorData.raw !== undefined
-              ? parseFloat(sensorData.raw)
-              : sensorValue,
-          value: sensorValue,
-        };
+      // Ensure we have at least one valid numeric value
+      const hasValidValue = !isNaN(sensorReading.raw) || 
+                           !isNaN(sensorReading.value) || 
+                           !isNaN(sensorReading.calibrated);
 
-        // Process status field if provided (GOOD/BAD)
-        if (sensorData.status) {
-          const status = sensorData.status.toString().toUpperCase();
-          if (status === 'GOOD' || status === 'BAD') {
-            sensorReading.status = status;
-          } else {
-            this.logger.warn(
-              `Invalid status value for ${valueField}: ${sensorData.status}. Expected GOOD or BAD`,
-              {
-                field: valueField,
-                value: sensorData.status,
-              },
-            );
-          }
-        }
-
-        // Handle voltage field if present (for TDS and DO sensors)
-        if (sensorData.voltage !== undefined) {
-          const voltage = parseFloat(sensorData.voltage);
-          if (!isNaN(voltage)) {
-            sensorReading.voltage = voltage;
-          }
-        }
-
-        // Handle calibrated_ok field if present
-        if (sensorData.calibrated_ok !== undefined) {
-          sensorReading.calibrated_ok = Boolean(sensorData.calibrated_ok);
-        }
-
-        // Handle calibrated field if present
-        if (sensorData.calibrated !== undefined) {
-          const calibrated = parseFloat(sensorData.calibrated);
-          if (!isNaN(calibrated)) {
-            sensorReading.calibrated = calibrated;
-          }
-        }
-
+      if (hasValidValue) {
         return sensorReading;
       } else {
         this.logger.warn(
-          `Invalid numeric value for ${valueField}: ${JSON.stringify(sensorData)}`,
+          `No valid numeric value found for ${valueField}: ${JSON.stringify(sensorData)}`,
           {
             field: valueField,
             value: sensorData,

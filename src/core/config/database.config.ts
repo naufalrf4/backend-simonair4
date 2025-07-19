@@ -10,7 +10,7 @@ export default registerAs(
     username: process.env.DATABASE_USER,
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_NAME,
-    synchronize: process.env.NODE_ENV === 'development',
+    synchronize: true,
     logging: process.env.NODE_ENV === 'development',
     autoLoadEntities: true,
     retryAttempts: 3,

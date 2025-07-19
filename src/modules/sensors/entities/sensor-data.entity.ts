@@ -41,6 +41,9 @@ export class SensorData {
   @Column({ type: 'jsonb', nullable: true })
   do_level: SensorReading;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  mqtt_published_at: Date;
+
   // Relations
   @ManyToOne(() => Device, (device) => device.sensor_data)
   @JoinColumn({ name: 'device_id', referencedColumnName: 'device_id' })
